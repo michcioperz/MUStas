@@ -5,5 +5,6 @@ wow wow
 tyle kodu
 itd
 
-start: 'pythob2 -m dunnohowtnameit'
-connect: 'telnet localhost 7999'
+usage:
+`python2 -m dunnohowtnameit`
+`telnet localhost 7999`
