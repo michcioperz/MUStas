@@ -1,6 +1,5 @@
 import logging, threading
 
-logging.basicConfig(level=logging.DEBUG)
 
 class User():
     """A logged in user"""
@@ -13,7 +12,6 @@ class User():
         while True:
             data = self.socket.recv(2048)
             if len(data) == 0:
-                logging.info('Client disconnected')
+                logging.debug('Client disconnected')
                 return
-            logging.debug('Received: %s' % data)
             self.socket.sendall(data)
