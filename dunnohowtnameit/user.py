@@ -15,11 +15,11 @@ class User():
         try:
             f = open("users/"+self.username)
             data = f.read().split('\n')
-            """first line should self.password"""
-            if self.password != data[0]:
-                raise Exception('wrong self.password')
+            """first line should contain password in base64 (white characters)"""
+            if self.password.encode('base64').strip() != data[0]:
+                raise Exception('wrong password')
         except:
-            self.socket.sendall("Wrong username or self.password\n")
+            self.socket.sendall("Wrong username or password\n")
             self.socket.close()
             logging.info('Failed loggin attempt')
             return
@@ -36,7 +36,8 @@ class User():
             data = data.strip().split()
             if data[0] in actions:
                 actions[data[0]](self, data[1:])
-#           now check special location actions
+#           now check location related actions (like moving, since there will be many types of
+#           movement, it will be better to hold it in Location class (like 'n', 'south', 'upstairs')
 #           elif data[0] in self.location.actions:
 #               self.location.actions[data[0]](self.location, self, adata[1:])
             else:
