@@ -2,6 +2,7 @@ MUStas
 ======
 fantasowy MUD o staszicu
 albo nie o staszicu
+albo postapo a nie fantasowy
 wow wow
 tyle kodu
 itd
