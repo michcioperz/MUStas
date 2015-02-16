@@ -1,6 +1,6 @@
 import logging, socket
-from user import User
-from world import World
+from dunnohowtnameit.user import User
+from dunnohowtnameit.world import World
 
 def start(host='127.0.0.1', port=7999, loglevel=logging.INFO):
     logging.basicConfig(level=loglevel)
