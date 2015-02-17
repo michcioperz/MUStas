@@ -2,11 +2,14 @@ import logging, threading
 import os.path
 from . import errhndl
 
+DEFAULT_PROMPT = ">>> "
+
 class User():
     """A logged in user"""
     def __init__(self, socket):
         self.socket = socket
         self.thread = threading.Thread(target=self.loop)
+        self.prompt = DEFAULT_PROMPT
     def loop(self):
         """Login user and start game"""
         self.socket.sendall("Username: ")
@@ -34,6 +37,7 @@ class User():
         #here parse more data from data :P
         self.connected = True
         while self.connected:
+            self.socket.sendall(self.prompt)
             data = self.socket.recv(2048)
             if len(data) == 0:
                 self.socket.close()
