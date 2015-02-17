@@ -1,4 +1,5 @@
 import logging, threading
+import os.path
 
 
 class User():
@@ -10,10 +11,14 @@ class User():
         """Login user and start game"""
         self.socket.sendall("Username: ")
         self.username = self.socket.recv(2048).strip()
+        if not os.path.isfile(os.path.join("users",self.username)):
+            self.socket.sendall("You are not one of us\n")
+            self.socket.close()
+            return
         self.socket.sendall("Password: ")
         self.password = self.socket.recv(2048).strip()
         try:
-            f = open("users/"+self.username)
+            f = open(os.path.join("users", self.username))
             data = f.read().split('\n')
             #first line should contain password in base64 (white characters)"""
             if self.password.encode('base64').strip() != data[0]:
@@ -21,7 +26,7 @@ class User():
         except:
             self.socket.sendall("Wrong username or password\n")
             self.socket.close()
-            logging.info('Failed loggin attempt')
+            logging.info('Failed login attempt for user %s' % (self.username))
             return
         logging.info('User %s logged in' % self.username)
 
