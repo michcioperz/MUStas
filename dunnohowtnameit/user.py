@@ -73,4 +73,4 @@ class User():
         self.connected = False
 
 """dict with all actions user can take in every situation (or almost :P)"""
-actions={'say': User.say, 'quit': User.quit, 'cheat': User.cheat}
+actions={'say': User.say, 'quit': User.quit, 'exit': User.quit, 'leave': User.quit, 'cheat': User.cheat, 'hack': User.cheat}
