@@ -1,6 +1,6 @@
 import logging, threading
 import os.path
-
+from . import errhndl
 
 class User():
     """A logged in user"""
@@ -24,6 +24,7 @@ class User():
             if self.password.encode('base64').strip() != data[0]:
                 raise Exception('wrong password')
         except:
+            self.socket.sendall(errhndl.plea_for_advice())
             self.socket.sendall("Wrong username or password\n")
             self.socket.close()
             logging.info('Failed login attempt for user %s' % (self.username))
@@ -46,6 +47,7 @@ class User():
 #           elif data[0] in self.location.actions:
 #               self.location.actions[data[0]](self.location, self, adata[1:])
             else:
+                self.socket.sendall(errhndl.plea_for_advice())
                 self.socket.sendall("Wrong action\n")
 #       here put saving state to a file
     
