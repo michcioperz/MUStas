@@ -15,7 +15,7 @@ class User():
         try:
             f = open("users/"+self.username)
             data = f.read().split('\n')
-            """first line should contain password in base64 (white characters)"""
+            #first line should contain password in base64 (white characters)"""
             if self.password.encode('base64').strip() != data[0]:
                 raise Exception('wrong password')
         except:
@@ -49,10 +49,13 @@ class User():
 #        for user in self.location.users:
 #           user.socket.sendall('%s says: %s' % (self.username, " ".join(arguments)))
         self.socket.sendall('%s says: %s\n'%(self.username, ' '.join(arguments)))
+    def cheat(self, arguments):
+        self.socket.sendall("You attempt to cheat, but Almighty Nuclear Particles detect it and render you disconnected from the server.\n")
+        self.quit(arguments)
     def quit(self, arguments):
         self.socket.close()
         logging.info('User %s disconnected' % self.username)
         self.connected = False
 
 """dict with all actions user can take in every situation (or almost :P)"""
-actions={'say': User.say, 'quit' : User.quit}
+actions={'say': User.say, 'quit': User.quit, 'cheat': User.cheat}
