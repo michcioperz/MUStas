@@ -40,16 +40,20 @@ class User():
                 logging.info('User %s disconnected' % self.username)
                 self.connected = False
             data = data.strip().split()
-            if data[0] in actions:
-                actions[data[0]](self, data[1:])
-#           now check location related actions (like moving, since there will be many types of
-#           movement, it will be better to hold it in Location class (like 'n', 'south', 'upstairs')
-#           elif data[0] in self.location.actions:
-#               self.location.actions[data[0]](self.location, self, adata[1:])
+            if len(data) > 0:
+                if data[0] in actions:
+                    actions[data[0]](self, data[1:])
+#               now check location related actions (like moving, since there will be many types of
+#               movement, it will be better to hold it in Location class (like 'n', 'south', 'upstairs')
+#               elif data[0] in self.location.actions:
+#                   self.location.actions[data[0]](self.location, self, adata[1:])
+                else:
+                    self.socket.sendall(errhndl.plea_for_advice())
+                    self.socket.sendall("Wrong action\n")
             else:
                 self.socket.sendall(errhndl.plea_for_advice())
-                self.socket.sendall("Wrong action\n")
-#       here put saving state to a file
+                self.socket.sendall("Say something, yo\n")
+#           here put saving state to a file
     
     def say(self, arguments):
 #       should be something like that, current is just for testing
