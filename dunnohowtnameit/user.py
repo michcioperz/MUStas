@@ -18,17 +18,18 @@ class User():
         self.prompt = DEFAULT_PROMPT
         self.m = m
         self.location = None
+        self.line = ''
 
     def loop(self):
         """Login user and start the game"""
         self.socket.sendall("Username: ")
-        self.username = self.socket.recv(2048).strip()
+        self.username = self.getline()
         if not os.path.isfile(os.path.join("users",self.username)):
             self.socket.sendall("You are not one of us\n")
             self.socket.close()
             return
         self.socket.sendall("Password: ")
-        self.password = self.socket.recv(2048).strip()
+        self.password = self.getline()
         try:
             f = open(os.path.join("users", self.username))
             data = f.read().split('\n')
@@ -48,7 +49,7 @@ class User():
         self.connected = True
         while self.connected:
             self.socket.sendall(self.prompt)
-            data = self.socket.recv(2048)
+            data = self.getline()
 
             if len(data) == 0:
                 self.socket.close()
@@ -106,6 +107,13 @@ class User():
         self.socket.close()
         logging.info('User %s disconnected' % self.username)
         self.connected = False
+
+    def getline(self):
+        while '\n' not in self.line:
+            self.line += self.socket.recv(2048).replace('\r', '')
+        ls = self.line[:self.line.find('\n')]
+        self.line = self.line[self.line.find('\n')+1:]
+        return ls
 
 """dict with all actions user can take in every situation (or almost :P)"""
 actions={'say': User.say, 'quit': User.quit, ':q': User.quit, ':wq': User.quit, ':q!': User.quit, 'exit': User.quit, 'leave': User.quit, 'cheat': User.cheat, 'hack': User.cheat}
