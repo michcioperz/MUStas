@@ -1,6 +1,7 @@
 import logging, threading
 import os.path
 from . import errhndl
+from hashlib import sha512
 
 DEFAULT_PROMPT = ">>> "
 
@@ -23,8 +24,8 @@ class User():
         try:
             f = open(os.path.join("users", self.username))
             data = f.read().split('\n')
-            #first line should contain password in base64 (white characters)"""
-            if self.password.encode('base64').strip() != data[0]:
+            #first line should contain sha512 hash of password
+            if sha512(self.password + self.username).hexdigest() != data[0]:
                 raise Exception('wrong password')
         except:
             self.socket.sendall(errhndl.plea_for_advice())
