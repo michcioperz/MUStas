@@ -23,13 +23,19 @@ class User():
     def loop(self):
         """Login user and start the game"""
         self.socket.sendall("Username: ")
-        self.username = self.getline()
+        try:
+            self.username = self.getline()
+        except:
+            return
         if not os.path.isfile(os.path.join("users",self.username)):
             self.socket.sendall("You are not one of us\n")
             self.socket.close()
             return
         self.socket.sendall("Password: ")
-        self.password = self.getline()
+        try:
+            self.password = self.getline()
+        except:
+            return
         try:
             f = open(os.path.join("users", self.username))
             data = f.read().split('\n')
@@ -49,9 +55,9 @@ class User():
         self.connected = True
         while self.connected:
             self.socket.sendall(self.prompt)
-            data = self.getline()
-
-            if len(data) == 0:
+            try:
+                data = self.getline()
+            except:
                 self.socket.close()
                 logging.info('User %s disconnected' % self.username)
                 self.connected = False
@@ -110,7 +116,10 @@ class User():
 
     def getline(self):
         while '\n' not in self.line:
-            self.line += self.socket.recv(2048).replace('\r', '')
+            new = self.socket.recv(2048)
+            if len(new) == 0:
+                raise "Connection end"
+            self.line += new.replace('\r', '')
         ls = self.line[:self.line.find('\n')]
         self.line = self.line[self.line.find('\n')+1:]
         return ls
