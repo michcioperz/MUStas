@@ -3,6 +3,7 @@ from . import errhndl
 from hashlib import sha512
 
 DEFAULT_PROMPT = ">>> "
+#possible movements and some usefull dicts
 movement_short={'north':'n', 'south':'s', 'west':'w', 'east':'e', 'up':'u', 'down':'d'}
 movement_full=dict(zip(movement_short.values(), movement_short.keys()))
 movement_opposite={'north':'south', 'up':'down', 'east':'west'}
@@ -16,8 +17,10 @@ class User():
         self.thread = threading.Thread(target=self.loop)
         self.prompt = DEFAULT_PROMPT
         self.m = m
+        self.location = None
+
     def loop(self):
-        """Login user and start game"""
+        """Login user and start the game"""
         self.socket.sendall("Username: ")
         self.username = self.socket.recv(2048).strip()
         if not os.path.isfile(os.path.join("users",self.username)):
@@ -29,7 +32,6 @@ class User():
         try:
             f = open(os.path.join("users", self.username))
             data = f.read().split('\n')
-            #first line should contain sha512 hash of password
             if sha512(self.password + self.username).hexdigest() != data[0]:
                 raise Exception('wrong password')
         except:
@@ -40,58 +42,66 @@ class User():
             return
         logging.info('User %s logged in' % self.username)
 
-        #here parse more data from data :P
-        self.location = self.m.locations['1']
-        self.location.sendall('%s appears from nowhere\n'%self.username)
-        self.socket.sendall(self.location.desc())
-        self.location.users.add(self)
+        #move user to starting location, 1 for now
+        self.moveto('1', 'nowhere')
+
         self.connected = True
         while self.connected:
             self.socket.sendall(self.prompt)
             data = self.socket.recv(2048)
+
             if len(data) == 0:
                 self.socket.close()
                 logging.info('User %s disconnected' % self.username)
                 self.connected = False
                 break
+
             data = data.strip().split()
             if len(data) > 0:
                 if data[0] in actions:
                     actions[data[0]](self, data[1:])
-#               now check location related actions (like moving, since there will be many types of
-#               movement, it will be better to hold it in Location class (like 'n', 'south', 'upstairs')
                 elif data[0] in movements:
-                    self.moveto(data[0])
+                    self.move(data[0])
                 else:
                     self.socket.sendall(errhndl.plea_for_advice())
                     self.socket.sendall("Wrong action\n")
             else:
                 self.socket.sendall(errhndl.plea_for_advice())
                 self.socket.sendall("Say something, yo\n")
+
         self.location.users.remove(self)
         self.location.sendall('%s disappears suddenly\n'%(self.username))
-#           here put saving state to a file
-    def moveto(self, movement):
+
+    def move(self, movement):
+        """move user in a specyfied direction"""
         if movement in movement_short.keys():
             movement = movement_short[movement]
         full = movement_full[movement]
         if movement in self.location.movements.keys():
             destination = self.location.movements[movement]
-            self.location.users.remove(self)
-            self.location.sendall('%s goes %s\n'%(self.username, full))
-            self.socket.sendall('you go %s\n'%full)
-            self.location = self.m.locations[destination]
-            self.location.sendall('%s comes from %s\n'%(self.username, movement_opposite[full]))
-            self.socket.sendall(self.location.desc())
-            self.location.users.add(self)
+            self.moveto(destination, movement_opposite[full], full)
         else:
             self.socket.sendall("you can't go %s\n"%movement_full[movement])
 
+    def moveto(self, destination, comesfrom, full=""):
+        """move to specified destination"""
+        if self.location is not None:
+            self.location.users.remove(self)
+            self.location.sendall('%s goes %s\n'%(self.username, full))
+            self.socket.sendall('you go %s\n'%full)
+        self.location = self.m.locations[destination]
+        self.location.sendall('%s comes from %s\n'%(self.username, comesfrom))
+        self.socket.sendall(self.location.desc())
+        self.location.users.add(self)
+
     def say(self, arguments):
         self.location.sendall('%s says: %s\n'%(self.username, ' '.join(arguments)))
+
     def cheat(self, arguments):
-        self.socket.sendall("You attempt to cheat, but Almighty Nuclear Particles detect it and render you disconnected from the server.\n")
+        self.socket.sendall("You attempt to cheat, but Almighty Nuclear Particles detect\
+                it and render you disconnected from the server.\n")
         self.quit(arguments)
+
     def quit(self, arguments):
         self.socket.close()
         logging.info('User %s disconnected' % self.username)
