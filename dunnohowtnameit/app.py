@@ -22,12 +22,15 @@ def start(host='127.0.0.1', port=7999, loglevel=logging.INFO):
             user.thread.start()
         except KeyboardInterrupt:
             logging.info('Closing server...')
+
             for user in logged_in.values():
                 user.interrupt = True
             for user in logged_in.values():
                 user.thread.join()
-                user.socket.sendall("Closing server\n")
+                user.socket.sendall('Closing server\n')
                 user.close()
                 user.socket.close()
+
             serversocket.close()
+            logging.info('Server closed')
             return

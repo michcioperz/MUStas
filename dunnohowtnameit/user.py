@@ -24,8 +24,13 @@ class User():
 
     def loop(self):
         """Login user and start the game"""
+
+        #if user is not connected login him
         if not self.connected:
-            self.log_in()
+            try:
+                self.log_in()
+            except:
+                return
         if not self.connected:
             return
 
@@ -37,7 +42,6 @@ class User():
                 logging.info('User %s disconnected' % self.username)
                 self.connected = False
                 break
-            
             if self.interrupt:
                 return
 
@@ -57,24 +61,20 @@ class User():
         self.location.sendall('%s disappears suddenly\n'%(self.username))
 
     def close(self):
+        """close user, save all data, remove from locations and so on"""
         self.location.users.remove(self)
         del logged_in[self.username]
 
     def log_in(self):
+        """perform logging in"""
         self.socket.sendall("Username: ")
-        try:
-            self.username = self.getline()
-        except:
-            return
+        self.username = self.getline()
         if not os.path.isfile(os.path.join("users",self.username)):
             self.socket.sendall("You are not one of us\n")
             self.socket.close()
             return
         self.socket.sendall("Password: ")
-        try:
-            self.password = self.getline()
-        except:
-            return
+        self.password = self.getline()
         try:
             f = open(os.path.join("users", self.username))
             data = f.read().split('\n')
@@ -86,18 +86,16 @@ class User():
             self.socket.close()
             logging.info('Failed login attempt for user %s' % (self.username))
             return False
+
         if self.username not in logged_in.keys():
             logged_in[self.username] = self
         else:
             self.socket.sendall(
                     "You are already logged in, do you want to take control over(yes?): ");
-            try:
-                response = self.getline()
-            except:
-                return
+            response = self.getline()
             if response == "yes":
                 logged_in[self.username].reset(self.socket,
-                    "Somebody is taking over controll of your soul...\n")
+                        "Somebody is taking over controll of your soul...\n")
             else:
                 self.socket.close()
             return
@@ -106,6 +104,7 @@ class User():
         self.connected = True
 
     def reset(self, socket, msg):
+        """reset connection with new socket"""
         self.interrupt = True
         self.thread.join()
         self.interrupt = False
