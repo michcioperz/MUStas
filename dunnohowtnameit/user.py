@@ -1,4 +1,4 @@
-import logging, threading, os.path
+import logging, threading, os.path, socket
 from . import errhndl
 from hashlib import sha512
 
@@ -19,9 +19,48 @@ class User():
         self.m = m
         self.location = None
         self.line = ''
+        self.connected = False
+        self.interrupt = False
 
     def loop(self):
         """Login user and start the game"""
+        if not self.connected:
+            self.log_in()
+        if not self.connected:
+            return
+
+        while self.connected:
+            self.socket.sendall(self.prompt)
+            try:
+                data = self.getline()
+            except:
+                logging.info('User %s disconnected' % self.username)
+                self.connected = False
+                break
+            
+            if self.interrupt:
+                return
+
+            data = data.strip().split()
+            if len(data) > 0:
+                if data[0] in actions:
+                    actions[data[0]](self, data[1:])
+                elif data[0] in movements:
+                    self.move(data[0])
+                else:
+                    self.socket.sendall(errhndl.plea_for_advice())
+                    self.socket.sendall("Wrong action\n")
+            else:
+                self.socket.sendall(errhndl.plea_for_advice())
+                self.socket.sendall("Say something, yo\n")
+        self.close()
+        self.location.sendall('%s disappears suddenly\n'%(self.username))
+
+    def close(self):
+        self.location.users.remove(self)
+        del logged_in[self.username]
+
+    def log_in(self):
         self.socket.sendall("Username: ")
         try:
             self.username = self.getline()
@@ -46,45 +85,35 @@ class User():
             self.socket.sendall("Wrong username or password\n")
             self.socket.close()
             logging.info('Failed login attempt for user %s' % (self.username))
-            return
+            return False
         if self.username not in logged_in.keys():
             logged_in[self.username] = self
         else:
-            self.socket.sendall("You are already logged in\n");
-            self.socket.close()
-            return
-
-        logging.info('User %s logged in' % self.username)
-
-        #move user to starting location, 1 for now
-        self.moveto('1', 'nowhere')
-
-        self.connected = True
-        while self.connected:
-            self.socket.sendall(self.prompt)
+            self.socket.sendall(
+                    "You are already logged in, do you want to take control over(yes?): ");
             try:
-                data = self.getline()
+                response = self.getline()
             except:
-                logging.info('User %s disconnected' % self.username)
-                self.connected = False
-                break
-
-            data = data.strip().split()
-            if len(data) > 0:
-                if data[0] in actions:
-                    actions[data[0]](self, data[1:])
-                elif data[0] in movements:
-                    self.move(data[0])
-                else:
-                    self.socket.sendall(errhndl.plea_for_advice())
-                    self.socket.sendall("Wrong action\n")
+                return
+            if response == "yes":
+                logged_in[self.username].reset(self.socket,
+                    "Somebody is taking over controll of your soul...\n")
             else:
-                self.socket.sendall(errhndl.plea_for_advice())
-                self.socket.sendall("Say something, yo\n")
+                self.socket.close()
+            return
+        logging.info('User %s logged in' % self.username)
+        self.moveto('1', 'nowhere')
+        self.connected = True
 
-        self.location.users.remove(self)
-        self.location.sendall('%s disappears suddenly\n'%(self.username))
-        del logged_in[self.username]
+    def reset(self, socket, msg):
+        self.interrupt = True
+        self.thread.join()
+        self.interrupt = False
+        self.socket.sendall(msg)
+        self.socket.close()
+        self.socket = socket
+        self.thread = threading.Thread(target=self.loop)
+        self.thread.start()
 
     def move(self, movement):
         """move user in a specyfied direction"""
@@ -117,17 +146,23 @@ class User():
         self.quit(arguments)
 
     def quit(self, arguments):
+        self.socket.shutdown(socket.SHUT_RDWR)
         self.socket.close()
         logging.info('User %s disconnected' % self.username)
         self.connected = False
 
     def getline(self):
         while '\n' not in self.line:
-            new = self.socket.recv(2048)
-            if len(new) == 0:
-                self.socket.close()
-                raise "Connection end"
-            self.line += new.replace('\r', '')
+            try:
+                new = self.socket.recv(2048)
+            except socket.timeout:
+                if self.interrupt:
+                    return
+            else:
+                if len(new) == 0:
+                    self.socket.close()
+                    raise "Connection end"
+                self.line += new.replace('\r', '')
         ls = self.line[:self.line.find('\n')]
         self.line = self.line[self.line.find('\n')+1:]
         return ls
