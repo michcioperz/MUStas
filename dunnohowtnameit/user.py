@@ -47,7 +47,9 @@ class User():
 
             data = data.strip().split()
             if len(data) > 0:
-                if data[0] in actions:
+                if data[0] in shortcuts:
+                    shortcuts[data[0]][0](self, shortcuts[data[0]][1])
+                elif data[0] in actions:
                     actions[data[0]](self, data[1:])
                 elif data[0] in movements:
                     self.move(data[0])
@@ -133,8 +135,17 @@ class User():
             self.socket.sendall('you go %s\n'%full)
         self.location = self.m.locations[destination]
         self.location.sendall('%s comes from %s\n'%(self.username, comesfrom))
-        self.socket.sendall(self.location.desc())
+        self.socket.sendall(self.location.desc(self))
         self.location.users.add(self)
+
+    def look(self, arguments):
+        if len(arguments) == 0:
+            self.socket.sendall('well you must know where you want to look\n')
+            return
+        if arguments[0] == 'around':
+            self.socket.sendall(self.location.desc(self))
+        else:
+            self.socket.sendall('you can\'t look at that\n')
 
     def say(self, arguments):
         self.location.sendall('%s says: %s\n'%(self.username, ' '.join(arguments)))
@@ -166,8 +177,11 @@ class User():
         self.line = self.line[self.line.find('\n')+1:]
         return ls
 
-"""dict with all actions user can take in every situation (or almost :P)"""
-actions={'say': User.say, 'quit': User.quit, ':q': User.quit, ':wq': User.quit, ':q!': User.quit, 'exit': User.quit, 'leave': User.quit, 'cheat': User.cheat, 'hack': User.cheat}
+"""dict with all actions user can take in every situation (or almost :P) and some shortcuts"""
+actions={'say': User.say, 'quit': User.quit, ':q': User.quit, ':wq': User.quit, 
+':q!': User.quit, 'exit': User.quit, 'leave': User.quit, 'cheat': User.cheat, 'hack': User.cheat,
+'look': User.look}
+shortcuts={'la': (User.look, ["around"])}
 
 """dict with all logged in users"""
 logged_in={}

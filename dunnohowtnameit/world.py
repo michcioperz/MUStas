@@ -49,13 +49,13 @@ class Location():
         for user in self.users:
             user.socket.sendall(msg)
 
-    def desc(self, movements=True, users=True):
-        """get more detailed description"""
+    def desc(self, user, movements=True, users=True):
+        """get more detailed description visible for an user"""
         desc = self.description
         if movements and len(self.movements) > 0:
             desc += 'You can go: %s\n'%', '.join(map(lambda i: movement_full[i], self.movements))
-        if users and len(self.users) > 0:
-            desc += 'You see here: %s\n'%', '.join([u.username for u in self.users])
+        if users and len(self.users) > 1:
+            desc += 'You see here: %s\n'%', '.join([u.username for u in self.users if u != user])
         return desc
 
 class Mob():
