@@ -47,6 +47,13 @@ class User():
             self.socket.close()
             logging.info('Failed login attempt for user %s' % (self.username))
             return
+        if self.username not in logged_in.keys():
+            logged_in[self.username] = self
+        else:
+            self.socket.sendall("You are already logged in\n");
+            self.socket.close()
+            return
+
         logging.info('User %s logged in' % self.username)
 
         #move user to starting location, 1 for now
@@ -58,7 +65,6 @@ class User():
             try:
                 data = self.getline()
             except:
-                self.socket.close()
                 logging.info('User %s disconnected' % self.username)
                 self.connected = False
                 break
@@ -78,6 +84,7 @@ class User():
 
         self.location.users.remove(self)
         self.location.sendall('%s disappears suddenly\n'%(self.username))
+        del logged_in[self.username]
 
     def move(self, movement):
         """move user in a specyfied direction"""
@@ -118,6 +125,7 @@ class User():
         while '\n' not in self.line:
             new = self.socket.recv(2048)
             if len(new) == 0:
+                self.socket.close()
                 raise "Connection end"
             self.line += new.replace('\r', '')
         ls = self.line[:self.line.find('\n')]
@@ -126,3 +134,6 @@ class User():
 
 """dict with all actions user can take in every situation (or almost :P)"""
 actions={'say': User.say, 'quit': User.quit, ':q': User.quit, ':wq': User.quit, ':q!': User.quit, 'exit': User.quit, 'leave': User.quit, 'cheat': User.cheat, 'hack': User.cheat}
+
+"""dict with all logged in users"""
+logged_in={}

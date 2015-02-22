@@ -1,5 +1,5 @@
 import logging, socket
-from dunnohowtnameit.user import User
+from dunnohowtnameit.user import User, logged_in
 from dunnohowtnameit.world import Map
 
 def start(host='127.0.0.1', port=7999, loglevel=logging.INFO):
