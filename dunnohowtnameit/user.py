@@ -10,7 +10,7 @@ movement_opposite={'north':'south', 'up':'down', 'east':'west'}
 movement_opposite.update(dict(zip(movement_opposite.values(), movement_opposite.keys())))
 movements=movement_full.keys()+movement_full.values()
 
-class User():
+class User(object):
     """A logged in user"""
     def __init__(self, socket, m):
         self.socket = socket
@@ -39,7 +39,7 @@ class User():
             try:
                 data = self.getline()
             except:
-                logging.info('User %s disconnected' % self.username)
+                logging.info('User %s disconnected', self.username)
                 self.connected = False
                 break
             if self.interrupt:
@@ -82,26 +82,26 @@ class User():
             data = f.read().split('\n')
             if sha512(self.password + self.username).hexdigest() != data[0]:
                 raise Exception('wrong password')
-        except:
+        except Exception, IOError:
             self.socket.sendall(errhndl.plea_for_advice())
             self.socket.sendall("Wrong username or password\n")
             self.socket.close()
-            logging.info('Failed login attempt for user %s' % (self.username))
+            logging.info('Failed login attempt for user %s', self.username)
             return False
 
         if self.username not in logged_in.keys():
             logged_in[self.username] = self
         else:
             self.socket.sendall(
-                    "You are already logged in, do you want to take control over(yes?): ");
+                    "You are already logged in, do you want to take control over? (yes) ");
             response = self.getline()
             if response == "yes":
                 logged_in[self.username].reset(self.socket,
-                        "Somebody is taking over controll of your soul...\n")
+                        "Somebody is taking over control of your soul...\n")
             else:
                 self.socket.close()
             return
-        logging.info('User %s logged in' % self.username)
+        logging.info('User %s logged in', self.username)
         self.moveto('1', 'nowhere')
         self.connected = True
 
@@ -158,7 +158,7 @@ class User():
     def quit(self, arguments):
         self.socket.shutdown(socket.SHUT_RDWR)
         self.socket.close()
-        logging.info('User %s disconnected' % self.username)
+        logging.info('User %s disconnected', self.username)
         self.connected = False
 
     def getline(self):

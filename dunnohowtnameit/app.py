@@ -12,7 +12,7 @@ def start(host='127.0.0.1', port=7999, loglevel=logging.INFO):
     serversocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     serversocket.bind((host, port))
     serversocket.listen(5)
-    logging.info('Now listening on %s:%i...' % (host, port,))
+    logging.info('Now listening on %s:%i...', host, port)
     while True:
         try:
             clientsocket, address = serversocket.accept()

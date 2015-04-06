@@ -1,33 +1,33 @@
 import os, logging
-from dunnohowtnameit.user import movement_short, movement_full
+from dunnohowtnameit.user import movement_full
 
-class Map():
+class Map(object):
     """A map"""
     def __init__(self):
         self.locations = {}
-    def load(self,directory):
+    def load(self, directory):
         """load map from directory, each file in directory is a location"""
         for location in os.listdir(directory):
             try:
                 l = Location()
                 l.load(os.path.join(directory, location), location)
-            except:
-                logging.error("Error during loading location %s/%s"%(directory, location))
+            except IOError:
+                logging.error("Error during loading location %s/%s", directory, location)
             finally:
                 self.locations[location] = l
 
-class Location():
+class Location(object):
     """A location"""
     def __init__(self):
-        self.description=""
-        self.users=set()
-        self.movements={}
-        self.id = None
+        self.description = ""
+        self.users = set()
+        self.movements = {}
+        self.ident = None
 
-    def load(self,filename, id):
+    def load(self, filename, ident):
         """load location from file"""
-        self.id = id
-        f = open(filename,'r')
+        self.ident = ident
+        f = open(filename, 'r')
 
         #load description, until a line containing only '-'
         while True:
@@ -58,6 +58,6 @@ class Location():
             desc += 'You see here: %s\n'%', '.join([u.username for u in self.users if u != user])
         return desc
 
-class Mob():
+class Mob(object):
     """A mob"""
     pass
